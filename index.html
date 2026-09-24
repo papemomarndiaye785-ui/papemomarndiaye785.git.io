@@ -5,7 +5,8 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <meta name="description"
           content="Portfolio de Pape Momar NDIAYE, Technicien Réseau & Systèmes à Dakar.">
@@ -55,7 +56,8 @@
         </div>
 
 
-        <ul class="nav-links">
+        <ul id="nav-links"
+            class="nav-links">
 
             <li>
                 <a href="#accueil">Accueil</a>
@@ -86,6 +88,8 @@
 
         <button id="menu-btn"
                 aria-label="Ouvrir le menu"
+                aria-controls="nav-links"
+                aria-expanded="false"
                 type="button">
 
             <i class="fas fa-bars"></i>
@@ -1122,7 +1126,35 @@
 
         <!-- ================= FORMULAIRE ================= -->
 
-        <form id="contact-form">
+        <form id="contact-form"
+              action="https://formsubmit.co/ajax/papemomarndiaye785@gmail.com"
+              method="POST">
+
+
+            <input
+                type="hidden"
+                name="_subject"
+                value="Nouveau message depuis le portfolio"
+            >
+
+
+            <input
+                type="hidden"
+                name="_captcha"
+                value="false"
+            >
+
+
+            <!-- Protection contre les robots -->
+
+            <input
+                type="text"
+                name="_honey"
+                class="form-honeypot"
+                tabindex="-1"
+                autocomplete="off"
+                aria-hidden="true"
+            >
 
 
             <input
@@ -1162,6 +1194,12 @@
                 Envoyer le message
 
             </button>
+
+
+            <p id="form-status"
+               class="form-status"
+               role="status"
+               aria-live="polite"></p>
 
 
         </form>
