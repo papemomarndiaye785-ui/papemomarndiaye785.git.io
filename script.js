@@ -8,12 +8,97 @@
 
 const menuBtn = document.getElementById("menu-btn");
 const navLinks = document.querySelector(".nav-links");
+const siteHeader = document.querySelector("header");
+
+const setMenuState = (isOpen) => {
+
+    if (!menuBtn || !navLinks) return;
+
+    navLinks.classList.toggle("active", isOpen);
+
+    document.body.classList.toggle(
+        "menu-open",
+        isOpen
+    );
+
+    menuBtn.setAttribute(
+        "aria-expanded",
+        String(isOpen)
+    );
+
+    menuBtn.setAttribute(
+        "aria-label",
+        isOpen ? "Fermer le menu" : "Ouvrir le menu"
+    );
+
+    const menuIcon =
+        menuBtn.querySelector("i");
+
+    if (menuIcon) {
+
+        menuIcon.classList.toggle(
+            "fa-bars",
+            !isOpen
+        );
+
+        menuIcon.classList.toggle(
+            "fa-xmark",
+            isOpen
+        );
+
+    }
+
+};
 
 if (menuBtn && navLinks) {
 
     menuBtn.addEventListener("click", () => {
 
-        navLinks.classList.toggle("active");
+        const isOpen =
+            !navLinks.classList.contains("active");
+
+        setMenuState(isOpen);
+
+    });
+
+
+    document.addEventListener("click", (event) => {
+
+        if (
+            navLinks.classList.contains("active") &&
+            siteHeader &&
+            !siteHeader.contains(event.target)
+        ) {
+
+            setMenuState(false);
+
+        }
+
+    });
+
+
+    document.addEventListener("keydown", (event) => {
+
+        if (
+            event.key === "Escape" &&
+            navLinks.classList.contains("active")
+        ) {
+
+            setMenuState(false);
+            menuBtn.focus();
+
+        }
+
+    });
+
+
+    window.addEventListener("resize", () => {
+
+        if (window.innerWidth > 900) {
+
+            setMenuState(false);
+
+        }
 
     });
 
@@ -26,9 +111,7 @@ document.querySelectorAll(".nav-links a").forEach(link => {
 
     link.addEventListener("click", () => {
 
-        if (navLinks) {
-            navLinks.classList.remove("active");
-        }
+        setMenuState(false);
 
     });
 
@@ -41,65 +124,155 @@ const contactForm = document.getElementById("contact-form");
 
 if (contactForm) {
 
-    contactForm.addEventListener("submit", function(event) {
+    const formStatus =
+        document.getElementById("form-status");
+
+    const submitButton =
+        contactForm.querySelector('button[type="submit"]');
+
+    const defaultButtonContent =
+        submitButton.innerHTML;
+
+
+    const showStatus = (message, type) => {
+
+        formStatus.textContent = message;
+
+        formStatus.className =
+            "form-status";
+
+        if (type) {
+
+            formStatus.classList.add(type);
+
+        }
+
+    };
+
+
+    contactForm.addEventListener("submit", async function(event) {
 
         event.preventDefault();
 
 
-        const name =
-            document.getElementById("name").value.trim();
+        if (!contactForm.checkValidity()) {
 
-        const email =
-            document.getElementById("email").value.trim();
-
-        const message =
-            document.getElementById("message").value.trim();
-
-
-        if (!name || !email || !message) {
-
-            alert("Veuillez remplir tous les champs.");
+            contactForm.reportValidity();
 
             return;
 
         }
 
 
-        const destinataire =
-            "papemomarndiaye785@gmail.com";
+        const formData =
+            new FormData(contactForm);
 
 
-        const sujet =
-            encodeURIComponent(
-                "Message depuis mon portfolio"
+        /* Bloquer les robots */
+
+        if (formData.get("_honey")) {
+
+            return;
+
+        }
+
+
+        const payload =
+            Object.fromEntries(formData.entries());
+
+
+        if (
+            window.location.protocol === "http:" ||
+            window.location.protocol === "https:"
+        ) {
+
+            payload._url =
+                window.location.href;
+
+        }
+
+
+        submitButton.disabled = true;
+
+        submitButton.setAttribute(
+            "aria-busy",
+            "true"
+        );
+
+        submitButton.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> ' +
+            'Envoi en cours...';
+
+        showStatus(
+            "Transmission de votre message...",
+            "sending"
+        );
+
+
+        try {
+
+            const response = await fetch(
+                contactForm.action,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            const result = await response.json();
+
+
+            if (
+                !response.ok ||
+                result.success === "false" ||
+                result.success === false
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "Échec de l'envoi"
+                );
+
+            }
+
+
+            contactForm.reset();
+
+            showStatus(
+                "Message envoyé ! Je vous répondrai dès que possible.",
+                "success"
             );
 
 
-        const corps =
-            encodeURIComponent(
+        } catch (error) {
 
-                "Bonjour Pape Momar NDIAYE,\n\n" +
+            console.error(error);
 
-                "Vous avez reçu un nouveau message " +
-                "depuis votre portfolio.\n\n" +
-
-                "Nom : " + name + "\n" +
-
-                "Email : " + email + "\n\n" +
-
-                "Message :\n" + message
-
+            showStatus(
+                "Le message n'a pas pu être envoyé. " +
+                "Vérifiez votre connexion et réessayez.",
+                "error"
             );
 
 
-        window.location.href =
-            "mailto:" +
-            destinataire +
-            "?subject=" +
-            sujet +
-            "&body=" +
-            corps;
+        } finally {
 
+            submitButton.disabled = false;
+
+            submitButton.removeAttribute(
+                "aria-busy"
+            );
+
+            submitButton.innerHTML =
+                defaultButtonContent;
+
+        }
 
     });
 
